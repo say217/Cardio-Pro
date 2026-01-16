@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heartly — Heart Risk Prediction</title>
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='Gemini_Generated_Image_a4rvjpa4rvjpa4rv.png') }}">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+
+    </style>
+</head>
+<body>
+
+<div class="app">
+    <header class="app-header">
+        <div class="logo-container">
+            <img src="https://i.postimg.cc/Xv6Tcg1s/Gemini-Generated-Image-a4rvjpa4rvjpa4rv.png" alt="Heartly Logo" class="logo">
+            <span class="app-title">Heartly</span>
+        </div>
+    </header>
+
+    <div class="main-content">
+        <!-- LEFT: Form + Results -->
+        <div class="left">
+            <p class="intro">Advanced heart risk assessment<br>Clear numbers • Honest insights • Better decisions</p>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, msg in messages %}
+                        <p class="flash {{ category }}">{{ msg }}</p>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Your flashed messages block remains the same -->
+
+            <form id="prediction-form">
+         <div class="form-grid">
+                    <div class="form-group">
+                        <label>Age</label>
+                        <input type="number" name="age" required min="1" max="120" value="{{ input_data.age|default('') }}">
+                    </div>
+                    <div class="form-group">
+                        <label>Sex</label>
+                        <select name="sex" required>
+                            <option value="" disabled {% if not input_data.sex %}selected{% endif %}>Select</option>
+                            <option value="1" {% if input_data.sex == 1 %}selected{% endif %}>Male</option>
+                            <option value="0" {% if input_data.sex == 0 %}selected{% endif %}>Female</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Systolic BP (mmHg)</label>
+                        <input type="number" name="systolic_bp" required step="any" value="{{ input_data.systolic_bp|default('') }}">
+                    </div>
+                    <div class="form-group">
+                        <label>Cholesterol (mg/dL)</label>
+                        <input type="number" name="cholesterol" required step="any" value="{{ input_data.cholesterol|default('') }}">
+                    </div>
+                    <div class="form-group">
+                        <label>BMI</label>
+                        <input type="number" name="bmi" required step="0.01" value="{{ input_data.bmi|default('') }}">
+                    </div>
+                    <div class="form-group">
+                        <label>Smoking</label>
+                        <select name="smoking" required>
+                            <option value="" disabled {% if not input_data.smoking is defined %}selected{% endif %}>Select</option>
+                            <option value="1" {% if input_data.smoking == 1 %}selected{% endif %}>Yes</option>
+                            <option value="0" {% if input_data.smoking == 0 %}selected{% endif %}>No</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Diabetes</label>
+                        <select name="diabetes" required>
+                            <option value="" disabled {% if not input_data.diabetes is defined %}selected{% endif %}>Select</option>
+                            <option value="1" {% if input_data.diabetes == 1 %}selected{% endif %}>Yes</option>
+                            <option value="0" {% if input_data.diabetes == 0 %}selected{% endif %}>No</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Resting Heart Rate (bpm)</label>
+                        <input type="number" name="resting_hr" required value="{{ input_data.resting_hr|default('') }}">
+                    </div>
+                    <div class="form-group">
+                        <label>Physical Activity (days/week)</label>
+                        <input type="number" name="physical_activity" required min="0" max="7" value="{{ input_data.physical_activity|default('') }}">
+                    </div>
+                    <div class="form-group">
+                        <label>Family History</label>
+                        <select name="family_history" required>
+                            <option value="" disabled {% if not input_data.family_history is defined %}selected{% endif %}>Select</option>
+                            <option value="1" {% if input_data.family_history == 1 %}selected{% endif %}>Yes</option>
+                            <option value="0" {% if input_data.family_history == 0 %}selected{% endif %}>No</option>
+                        </select>
+                    </div>
+
+                   <button type="submit" id="predict-btn">
+    <span class="btn-text">Calculate Risk</span>
+    <span class="form-loader"></span>
+</button>
+<audio id="clickSound" preload="auto">
+    <source src="{{ url_for('static', filename='computer-mouse-click-352734.mp3') }}" type="audio/mpeg">
+</audio>
+
+                </div>
+            </form>
+      {% if risk_level %}
+            <div class="result-section">
+                <h2>Quick Results</h2>
+                <div class="result-box {{ risk_level|lower|replace(' ', '-') }}">
+                    <span class="risk-emoji"></span>
+                    {{ risk_level }}
+                </div>
+                <div class="prob-title">Probability Breakdown</div>
+                <table class="prob-table">
+                    <tr><th>Risk Level</th><th>%</th></tr>
+                    <tr><td style='color:green;'>Low</td><td>{{ probabilities.Low|default(0) }}%</td></tr>
+                    <tr><td style='color:yellow;'>Medium</td><td>{{ probabilities.Medium|default(0) }}%</td></tr>
+                    <tr><td style='color:orange;'>High</td><td>{{ probabilities.High|default(0) }}%</td></tr>
+                    <tr><td style='color:red;'>Very High</td><td>{{ probabilities['Very High']|default(0) }}%</td></tr>
+                </table>
+                <p class="note"> This is an Experimental project</p>
+            </div>
+            {% endif %}
+            <!-- Your result section remains mostly the same -->
+        </div>
+
+        <!-- RIGHT: Chat – much cleaner look -->
+<!-- RIGHT: Modern Chat Section -->
+<div class="right">
+  <div class="chat-header">
+    <div class="ai-avatar-small">
+        <img src="https://i.postimg.cc/Xv6Tcg1s/Gemini-Generated-Image-a4rvjpa4rvjpa4rv.png" alt="">
+    </div>
+    Dr. Heart AI
+    <span class="chat-subtitle">Your personal heart health assistant</span>
+</div>
+
+    <div class="chat-box" id="chat-box">
+        <!-- Welcome / watermark message (shown when chat is empty) -->
+        <div class="welcome-watermark" id="welcome-watermark">
+            <h1>Ask anything..</h1>
+            <p>Results interpretation • Lifestyle advice </p>
+        </div>
+
+        {% for msg in chat_history %}
+            <div class="message {{ 'user-msg' if msg.role == 'user' else 'ai-msg' }}">
+                {% if msg.role == 'user' %}
+                    <div class="user-content">{{ msg.content }}</div>
+                {% else %}
+                    <div class="ai-response">{{ msg.content | safe }}</div>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>    
+ 
+    <!-- ── Modern floating-style input ── -->
+    <div class="chat-input-wrapper">
+        <div class="prompt-tags" id="suggestion-chips">
+            <div class="prompt-chip">Explain my risk level</div>
+            <div class="prompt-chip">What should I change first?</div>
+            <div class="prompt-chip">Diet recommendations</div>
+            <div class="prompt-chip">How accurate is this?</div>
+            <div class="prompt-chip">Next check-up timing</div>
+        </div>
+
+        <div class="chat-input-container">
+            <div class="textarea-wrapper" data-value="">
+                <textarea 
+                    id="chatInput" 
+                    rows="1" 
+                    placeholder="Ask about your results, lifestyle, next steps..."
+                    autocomplete="off"
+                ></textarea>
+            </div>
+          <button class="send-btn" type="button" id="send-chat-btn">
+    <svg viewBox="0 0 24 24">
+        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+    </svg>
+</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const btn = document.getElementById('predict-btn');
+const sound = document.getElementById('clickSound');
+if (btn && sound) {
+    btn.addEventListener('click', () => {
+        try {
+            sound.currentTime = 0;
+            sound.play();
+        } catch (e) {
+            // autoplay or play() may fail silently if blocked by browser
+            console.warn('Click sound play failed', e);
+        }
+    });
+}
+</script>
+
+
+
+
+<!-- Your existing JavaScript remains unchanged -->
+<script>
+
+document.getElementById('prediction-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const btn = document.getElementById('predict-btn');
+    const btnText = btn.querySelector('.btn-text');
+    const loader = btn.querySelector('.form-loader');
+
+    btn.disabled = true;
+    btnText.style.display = 'none';
+    loader.style.display = 'inline-block';
+
+    try {
+        const response = await fetch('/', {
+            method: 'POST',
+            body: new FormData(this)
+        });
+
+        if (!response.ok) {
+            throw new Error(`Server error ${response.status}`);
+        }
+
+        // Success → reload
+        window.location.reload();
+
+    } catch (err) {
+        console.error("Prediction failed:", err);
+        alert("Something went wrong during prediction.\nCheck console for more details.");
+        
+    } finally {
+        btn.disabled = false;
+        btnText.style.display = 'inline';
+        loader.style.display = 'none';
+    }
+});
+
+</script>
+<script>
+// Modern chat logic
+const chatBox = document.getElementById('chat-box');
+const chatInput = document.getElementById('chatInput');
+const sendBtn = document.getElementById('send-chat-btn');
+const textareaWrapper = chatInput.parentElement;
+const welcomeWatermark = document.getElementById('welcome-watermark');
+
+// Auto-grow textarea + mirror for height
+chatInput.addEventListener('input', () => {
+    textareaWrapper.dataset.value = chatInput.value;
+    // Auto scroll to bottom when typing long messages
+    chatBox.scrollTop = chatBox.scrollHeight;
+});
+
+// Hide watermark when first message appears
+function updateWatermarkVisibility() {
+    if (chatBox.querySelectorAll('.message').length > 0) {
+        chatBox.classList.add('has-messages');
+    }
+}
+
+// Send message (same backend logic) — now shows loader while awaiting response
+async function sendMessage() {
+    const message = chatInput.value.trim();
+    if (!message) return;
+
+    // Show user message
+    const userMsg = document.createElement('div');
+    userMsg.className = 'message user-msg';
+    userMsg.innerHTML = `<div class="user-content">${message.replace(/\n/g, '<br>')}</div>`;
+    chatBox.appendChild(userMsg);
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    // Show loader message (AI placeholder)
+    const loaderMsg = document.createElement('div');
+    loaderMsg.className = 'message ai-msg';
+    loaderMsg.innerHTML = `<div class="ai-response"><div class="ailoader" aria-hidden="true"></div></div>`;
+    chatBox.appendChild(loaderMsg);
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    // Clear input
+    chatInput.value = '';
+    textareaWrapper.dataset.value = '';
+
+    updateWatermarkVisibility();
+
+    try {
+        const res = await fetch('/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message })
+        });
+
+        const data = await res.json();
+
+        if (data.error) {
+            loaderMsg.innerHTML = `<div class="ai-response"><strong>Error:</strong> ${data.error}</div>`;
+        } else {
+            // Replace loader with AI message
+            loaderMsg.innerHTML = `<div class="ai-response">${data.ai_message}</div>`;
+        }
+
+        chatBox.scrollTop = chatBox.scrollHeight;
+        updateWatermarkVisibility();
+
+    } catch (err) {
+        console.error(err);
+        loaderMsg.innerHTML = '<div class="ai-response"><strong>Connection error</strong> — please try again</div>';
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+}
+
+// Trigger send on button click or Enter (without shift)
+sendBtn.addEventListener('click', sendMessage);
+
+chatInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+    }
+});
+
+// Suggestion chips
+document.querySelectorAll('.prompt-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+        chatInput.value = chip.textContent;
+        textareaWrapper.dataset.value = chatInput.value;
+        chatInput.focus();
+        // Optional: auto-send
+        // sendMessage();
+    });
+});
+
+// Initial check
+updateWatermarkVisibility();
+</script>
+
+
+
+
+<script>
+  document.getElementById('prediction-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const btn = document.getElementById('predict-btn');
+    btn.disabled = true;
+    btn.querySelector('.btn-text').style.display = 'none';
+    btn.querySelector('.form-loader').style.display = 'inline-block';
+
+    try {
+        const response = await fetch('/', {
+            method: 'POST',
+            body: new FormData(this)
+        });
+
+        if (!response.ok) throw new Error();
+
+        window.location.reload();
+
+    } catch {
+        alert("Prediction failed. Please try again.");
+        btn.disabled = false;
+        btn.querySelector('.btn-text').style.display = 'inline';
+        btn.querySelector('.form-loader').style.display = 'none';
+    }
+});
+//loader
+</script>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
